@@ -3,6 +3,25 @@
 
 int epoll_fd;
 
+
+void recv_process(void)
+{
+    while(1)
+    {
+        maxfds = -1;
+        maxfds = epoll_wait(epoll_fd, eventstmp, MAX_EPOLL_NUM, -1);
+        for(i = 0; i < maxfds; ++i)
+        {
+            client_sock = eventsemp[i].data.fd
+            if(eventstmp[i].events & EPOLLIN)
+            {
+                ret = RecvFrame(client_sock, &close_fd);
+            
+            }
+        }
+    }
+}
+
 int init_socket(unsigned int port)
 {
     int socketfd;
@@ -36,7 +55,8 @@ int init_socket(unsigned int port)
 }
 int start_service(const char *ip, int port)
 {
-    int ret = 0; 
+    int ret = 0;
+    pthread_t recv_poress_fd;
     epoll_fd = epoll_create(100);
     
     ret = init_socket(port)
@@ -44,6 +64,38 @@ int start_service(const char *ip, int port)
     {
         printf(" init socket faile! \n");
         return -1;
+    }
+
+    ret = pthread_create(&recv_poress_fd, NULL, (void*)recv_poress, NULL);
+    if(ret < 0)
+    {
+        printf("pthread create faile \n");
+        exit(1);
+    }
+    
+    int clilen;
+    int clifd;
+    struct sockaddr_in cliaddr;
+    while(1)
+    {
+        clilen = sizeof(ciladdr);
+        clifd = accept(socketfd, (void *)&cliaddr, &clilen);
+        if (clifd < 0 && errno == EINTR)
+        {
+            continue;
+        }
+        else if(clifd < 0)
+        {
+            printf(" net server accept error !");
+        }
+
+        ev_reg.data.fd = clifd;
+        ev_reg.events = EPOLLPRI| EPOLLIN |EPOLLET | EPOLLERR |EPOLLHUP;
+        if(epoll_ctl(epoll_fd, EPOLL_CTL_ADD, clifd, &ev_reg) < 0)
+        {
+            printf(" server add client to epoll ctl failed. clifd:", clifd);
+            continue;
+        }
     }
 }
 
