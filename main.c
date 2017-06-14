@@ -65,6 +65,7 @@ int RecvFrame(int fd, int *close_fd)
             }
         }
         
+        printf_t(buff, count);
         if(count == MAX_READ_FRAME)
         {
             printf("接收帧数据超过最大值\n");
@@ -123,6 +124,7 @@ void recv_poress(void)
             client_sock = eventstmp[i].data.fd;
             if(eventstmp[i].events & EPOLLIN)
             {
+                printf("接收 数据\n");
                 ret = RecvFrame(client_sock, &close_fd);
                 if (1 == ret)
                 {
@@ -155,11 +157,11 @@ int init_socket(unsigned int port)
         printf(" socket error! \n");
         return -1;
     }
-
+    printf(" port:%d\n", port);
     memset((void *)&server_addr, 0, sizeof(server_addr));
     server_addr.sin_family = AF_INET;
     server_addr.sin_addr.s_addr = htonl(INADDR_ANY);
-    server_addr.sin_port = htonl(port);
+    server_addr.sin_port = htons(port);
     memset((void*)&(server_addr.sin_zero), 0, 8);
 
     if (bind(socketfd, (struct sockaddr*)&server_addr, sizeof(struct sockaddr_in)) < 0)
@@ -168,7 +170,7 @@ int init_socket(unsigned int port)
         return -1;
     }
     //等待队列为5
-    if(listen(socketfd, 5))
+    if(listen(socketfd, 5) < 0)
     {
         printf(" listen error! \n");
     }
@@ -187,6 +189,7 @@ int start_service(const char *ip, int port)
         printf(" init socket faile! \n");
         return -1;
     }
+    printf("init socket succ socketfd:%d\n", socketfd);
 
     ret = pthread_create(&recv_poress_fd, NULL, (void*)recv_poress, NULL);
     if(ret < 0)
@@ -210,7 +213,7 @@ int start_service(const char *ip, int port)
         {
             printf(" net server accept error !");
         }
-
+        printf("new client clifd:%d\n", clifd);
         ev_reg.data.fd = clifd;
         ev_reg.events = EPOLLPRI| EPOLLIN |EPOLLET | EPOLLERR |EPOLLHUP;
         if(epoll_ctl(epoll_fd, EPOLL_CTL_ADD, clifd, &ev_reg) < 0)
