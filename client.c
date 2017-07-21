@@ -186,14 +186,15 @@ int start_service(const char *ip, int port)
         return -1;
     }
     printf("init socket succ socketfd:%d\n", socketfd);
-    for(i = 0; i < 10; ++i)
+//    for(i = 0; i < 10; ++i)
     send(socketfd, "123456", sizeof("123456"), 0);
-
+    sleep(10);
     close_net(socketfd);
 }
 
 int main(int argc, char *argv[])
 {
     start_service("127.0.0.1", 8899);
+    while(1) sleep(100);
     return 0;
 }
